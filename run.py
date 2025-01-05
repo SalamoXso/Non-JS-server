@@ -82,9 +82,9 @@ def verification():
         # Implement your verification logic
         success = verify(user_input)  # Call the verify function
 
-        return render_template('verification.html', images=images, success=success)
+        return render_template('index.html', images=images, success=success)
 
-    return render_template('verification.html', images=images)
+    return render_template('index.html', images=images)
 
 
 if __name__ == '__main__':
