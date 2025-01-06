@@ -16,29 +16,29 @@
         }
         .container {
             background-color: white;
-            padding: 3rem;  /* Increased padding */
-            border-radius: 15px; /* Slightly larger border radius */
-            box-shadow: 0 6px 9px rgba(0, 0, 0, 0.15);  /* Slightly larger shadow */
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 6px 9px rgba(0, 0, 0, 0.15);
             text-align: center;
         }
         h1 {
             color: #333;
-            margin-bottom: 2.25rem;  /* Increased margin-bottom */
-            font-size: 2.25rem;  /* Larger font size */
+            margin-bottom: 2.25rem;
+            font-size: 2.25rem;
         }
         .input-container {
             display: flex;
             justify-content: center;
-            margin-bottom: 2.25rem;  /* Increased margin-bottom */
+            margin-bottom: 2.25rem;
         }
         .input-circle {
-            width: 75px;  /* Increased width */
-            height: 75px;  /* Increased height */
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
             text-align: center;
-            font-size: 36px;  /* Increased font size */
-            margin: 0 7.5px;  /* Increased margin */
-            border: 3px solid #007bff;  /* Increased border size */
+            font-size: 36px;
+            margin: 0 7.5px;
+            border: 3px solid #007bff;
             outline: none;
             transition: border-color 0.3s ease;
         }
@@ -49,25 +49,25 @@
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            margin-bottom: 2.25rem;  /* Increased margin-bottom */
+            margin-bottom: 2.25rem;
         }
         .image-container img {
-            width: 90px;  /* Increased width */
-            height: 90px;  /* Increased height */
-            margin: 7.5px;  /* Increased margin */
-            border-radius: 7.5px;  /* Increased border-radius */
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);  /* Increased shadow */
+            width: 90px;
+            height: 90px;
+            margin: 7.5px;
+            border-radius: 7.5px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
         }
         .hidden-submit {
             display: none;
         }
         .instruction {
-            margin-top: 1.5rem;  /* Increased margin-top */
-            font-size: 18px;  /* Larger font size */
+            margin-top: 1.5rem;
+            font-size: 18px;
             color: #666;
         }
         .message {
-            margin-top: 1.5rem;  /* Increased margin-top */
+            margin-top: 1.5rem;
             font-weight: bold;
         }
         .success {
@@ -81,52 +81,48 @@
 <body>
     <div class="container">
         <h1>Verification Process</h1>
+        {% if success is none or not success %}
         <form method="POST" action="/">
             <!-- CSRF Token -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
+        
             <!-- Input Fields -->
             <div class="input-container">
-                {{ form.field0(class="input-circle", autofocus=true) }}
-                {{ form.field1(class="input-circle") }}
-                {{ form.field2(class="input-circle") }}
-                {{ form.field3(class="input-circle") }}
-                {{ form.field4(class="input-circle") }}
-                {{ form.field5(class="input-circle") }}
-            </div>
-
-            <!-- Generated Images -->
-            <div class="image-container">
-                {% for image in images %}
-                    <img src="{{ image }}" alt="Generated Image">
+                {% for i in range(6) %}
+                    {% if i == current_field %}
+                        {{ form['field' ~ i](class="input-circle", autofocus=true) }}
+                    {% else %}
+                        {{ form['field' ~ i](class="input-circle", style="display: none;") }}
+                    {% endif %}
                 {% endfor %}
             </div>
-
+        
+            <!-- Generated Images -->
+            <div class="image-container">
+                {% if images %}
+                    <img src="{{ images[current_field] }}" alt="Generated Image">
+                {% endif %}
+            </div>
+        
             <!-- Hidden Submit Button -->
             <input type="submit" class="hidden-submit">
-
+        
             <!-- Instruction -->
-            <div class="instruction">Press <strong>Enter</strong> after filling all fields.</div>
-
-            <!-- Success/Error Message -->
-            {% if success is not none %}
-                <p class="message {% if success %}success{% else %}error{% endif %}">
-                    {{ "Verification Successful!" if success else "Verification Failed. Please try again." }}
+            <div class="instruction">Press <strong>Enter</strong> after filling the field.</div>
+        
+            <!-- Error Message -->
+            {% if success is not none and not success %}
+                <p class="message error">
+                    Verification Failed. Please try again.
                 </p>
             {% endif %}
         </form>
+        {% else %}
+            <!-- Success Message -->
+            <p class="message success">
+                Verification Successful!
+            </p>
+        {% endif %}
     </div>
-
-    <!-- Minimal JavaScript to auto-focus the next field -->
-    <script>
-        const inputs = document.querySelectorAll('.input-circle');
-        inputs.forEach((input, index) => {
-            input.addEventListener('input', () => {
-                if (input.value.length === 1 && index < inputs.length - 1) {
-                    inputs[index + 1].focus(); // Move to the next field
-                }
-            });
-        });
-    </script>
 </body>
 </html>
