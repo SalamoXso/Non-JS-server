@@ -1,1 +1,163 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Process</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+        .input-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+        .input-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 24px;
+            margin: 0 5px;
+            border: 2px solid #007bff;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .input-circle:focus {
+            border-color: #0056b3;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+        .image-container img {
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .hidden-submit {
+            display: none;
+        }
+        .instruction {
+            margin-top: 1rem;
+            font-size: 14px;
+            color: #666;
+        }
+        .message {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Verification Process</h1>
+        <form id="verification-form">
+            <div class="input-container">
+                <input type="text" class="input-circle" id="field0" maxlength="1" required autofocus>
+                <input type="text" class="input-circle" id="field1" maxlength="1" required>
+                <input type="text" class="input-circle" id="field2" maxlength="1" required>
+                <input type="text" class="input-circle" id="field3" maxlength="1" required>
+                <input type="text" class="input-circle" id="field4" maxlength="1" required>
+                <input type="text" class="input-circle" id="field5" maxlength="1" required>
+            </div>
+            <div class="image-container" id="image-container">
+                <!-- Images will be dynamically added here -->
+            </div>
+            <input type="submit" class="hidden-submit">
+            <div class="instruction">Press <strong>Enter</strong> after filling all fields.</div>
+            <div id="message" class="message"></div>
+        </form>
+        
+        <script>
+            const form = document.getElementById('verification-form');
+            const imageContainer = document.getElementById('image-container');
+            const messageDiv = document.getElementById('message');
+        
+            // Fetch images from the back-end
+            async function fetchImages() {
+                const response = await fetch('https://your-flask-backend-url.com/get-images');
+                const data = await response.json();
+                imageContainer.innerHTML = data.images.map(image => `
+                    <img src="${image}" alt="Generated Image">
+                `).join('');
+            }
+        
+            // Handle form submission
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const userInput = [
+                    document.getElementById('field0').value,
+                    document.getElementById('field1').value,
+                    document.getElementById('field2').value,
+                    document.getElementById('field3').value,
+                    document.getElementById('field4').value,
+                    document.getElementById('field5').value
+                ];
+        
+                const response = await fetch('https://your-flask-backend-url.com/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userInput }),
+                });
+                const result = await response.json();
+        
+                if (result.success) {
+                    messageDiv.textContent = "Verification Successful!";
+                    messageDiv.className = "message success";
+                } else {
+                    messageDiv.textContent = "Verification Failed. Please try again.";
+                    messageDiv.className = "message error";
+                    fetchImages(); // Fetch new images on failure
+                }
+            });
+        
+            // Fetch images on page load
+            fetchImages();
+        </script>
+    </div>
+
+    <!-- Minimal JavaScript to auto-focus the next field -->
+    <script>
+        const inputs = document.querySelectorAll('.input-circle');
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                if (input.value.length === 1 && index < inputs.length - 1) {
+                    inputs[index + 1].focus(); // Move to the next field
+                }
+            });
+        });
+    </script>
+</body>
+</html>
