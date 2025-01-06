@@ -44,7 +44,7 @@ class VerificationForm(FlaskForm):
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=150, height=150):  # Increase image dimensions
+    def __init__(self, width=100, height=100):  # Increase image dimensions
         self.width = width
         self.height = height
 
