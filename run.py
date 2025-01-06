@@ -51,7 +51,7 @@ class VerificationForm(FlaskForm):
 
 # Image generator class
 class ImageGenerator:
-    def __init__(self, width=30, height=30):  # Increased dimensions for better visibility
+    def __init__(self, width=100, height=100):  # Increased dimensions for better visibility
         self.width = width
         self.height = height
 
@@ -81,7 +81,7 @@ class ImageGenerator:
         # Choose a random font and set a large font size
         font_path = random.choice(self.font_paths)
         try:
-            font_size = 0.01  # Set a large font size (adjust as needed)
+            font_size = 0.8  # Set a large font size (adjust as needed)
             font = ImageFont.truetype(font_path, font_size*500)
         except IOError as e:
             logger.error(f"Failed to load font: {font_path}. Error: {e}")
