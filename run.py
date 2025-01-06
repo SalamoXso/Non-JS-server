@@ -44,7 +44,7 @@ class VerificationForm(FlaskForm):
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=100, height=100):
+    def __init__(self, width=150, height=150):  # Increase image dimensions
         self.width = width
         self.height = height
 
@@ -72,7 +72,7 @@ class ImageGenerator:
         # Choose a random font
         font_path = random.choice(self.font_paths)
         try:
-            font = ImageFont.truetype(font_path, 30)
+            font = ImageFont.truetype(font_path, 50)  # Increase font size
         except IOError:
             font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
 
