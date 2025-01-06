@@ -28,7 +28,7 @@ csrf = CSRFProtect(app)
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,  # Limit by IP address
-    default_limits=["5 per minute"]  # Allow 5 attempts per minute
+    default_limits=["20 per minute"]  # Allow 20 attempts per minute
 )
 
 # Set up logging
@@ -129,6 +129,8 @@ def verification():
         user_input = [form.field0.data, form.field1.data, form.field2.data,
                       form.field3.data, form.field4.data, form.field5.data]
         correct_answers = session.get('correct_answers', [])
+        logger.info(f"User input: {user_input}")
+        logger.info(f"Correct answers: {correct_answers}")
 
         # Check if the user's input matches the correct answers
         if user_input == correct_answers:
@@ -139,6 +141,7 @@ def verification():
             session['correct_answers'] = correct_answers
             image_generator = ImageGenerator()
             images = [image_generator.generate_image(char) for char in correct_answers]
+            logger.info(f"Generated images: {images}")
 
             # Clear the form fields on failure
             form.field0.data = ''
@@ -153,6 +156,7 @@ def verification():
         session['correct_answers'] = correct_answers
         image_generator = ImageGenerator()
         images = [image_generator.generate_image(char) for char in correct_answers]
+        logger.info(f"Generated images on GET: {images}")
 
     return render_template('index.html', form=form, images=images, success=success)
 
