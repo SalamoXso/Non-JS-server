@@ -82,41 +82,33 @@
     <div class="container">
         <h1>Verification Process</h1>
         {% if success is none or not success %}
-        <form method="POST" action="/">
-            <!-- CSRF Token -->
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
-            <!-- Input Fields -->
             <div class="input-container">
-                {% for i in range(6) %}
+                {% for i in range(4) %}
                     {% if i == current_field %}
-                        {{ form['field' ~ i](class="input-circle", autofocus=true) }}
-                    {% else %}
-                        {{ form['field' ~ i](class="input-circle", style="display: none;") }}
+                        <form method="POST" action="/">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {{ form['field' ~ i](class="input-circle", autofocus=true, oninput="this.form.submit()") }}
+                        </form>
                     {% endif %}
                 {% endfor %}
             </div>
-        
-            <!-- Generated Images -->
+
+            <!-- Generated Image for Current Field -->
             <div class="image-container">
                 {% if images %}
                     <img src="{{ images[current_field] }}" alt="Generated Image">
                 {% endif %}
             </div>
-        
-            <!-- Hidden Submit Button -->
-            <input type="submit" class="hidden-submit">
-        
+
             <!-- Instruction -->
-            <div class="instruction">Press <strong>Enter</strong> after filling the field.</div>
-        
+            <div class="instruction">Type the letter and the form will auto-submit.</div>
+
             <!-- Error Message -->
             {% if success is not none and not success %}
                 <p class="message error">
                     Verification Failed. Please try again.
                 </p>
             {% endif %}
-        </form>
         {% else %}
             <!-- Success Message -->
             <p class="message success">
