@@ -35,7 +35,7 @@ class VerificationForm(FlaskForm):
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=200, height=200):  # Increased image size to 200x200
+    def __init__(self, width=200, height=200):  # Keep image size 200x200
         self.width = width
         self.height = height
         self.font_paths = ["arial.ttf", "times.ttf", "cour.ttf", "verdana.ttf", "comic.ttf", "impact.ttf"]
@@ -52,24 +52,24 @@ class ImageGenerator:
 
         font_path = random.choice(self.font_paths)
         try:
-            font_size = 200  # Start with a very large font size
+            font_size = 2000  # MASSIVELY increase font size
             font = ImageFont.truetype(font_path, font_size)
         except IOError:
             font = ImageFont.load_default()
 
-        # Reduce size if text is too big
-        min_font_size = 40  # Ensure a minimum readable size
+        # Reduce font size dynamically if it's too large
+        min_font_size = 500  # Ensure a minimum size so characters are always visible
         while True:
             bbox = draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
 
-            if text_width <= self.width * 0.8 and text_height <= self.height * 0.8:
-                break  # Stop shrinking when text fits inside the image
-            font_size -= 5  # Reduce font size step by step
+            if text_width <= self.width * 0.9 and text_height <= self.height * 0.9:
+                break  # Stop when text fits inside the image
+            font_size -= 100  # Reduce font size step by step
             if font_size < min_font_size:
                 font_size = min_font_size
-                break  # Don't shrink below this size
+                break  # Prevent text from getting too small
             font = ImageFont.truetype(font_path, font_size)
 
         # Center the text
@@ -78,21 +78,10 @@ class ImageGenerator:
         text_height = bbox[3] - bbox[1]
         position = ((self.width - text_width) // 2, (self.height - text_height) // 2)
 
-        # Draw text with light noise
-        for dx in range(-1, 2):
-            for dy in range(-1, 2):
-                if dx != 0 or dy != 0:
-                    draw.text((position[0] + dx, position[1] + dy), text, font=font, fill=(200, 200, 200))
+        # Draw text
         draw.text(position, text, font=font, fill='black')
 
-        # Add noise
-        for _ in range(5):
-            x1, y1, x2, y2 = random.randint(0, self.width), random.randint(0, self.height), random.randint(0, self.width), random.randint(0, self.height)
-            draw.line((x1, y1, x2, y2), fill=(180, 180, 180), width=1)
-
-        for _ in range(15):
-            draw.point((random.randint(0, self.width), random.randint(0, self.height)), fill=(180, 180, 180))
-
+        # Save image
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
         return f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"
