@@ -35,7 +35,7 @@ class VerificationForm(FlaskForm):
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=150, height=150):  # Increased size for better text visibility
+    def __init__(self, width=150, height=150):  # Keep 150x150, can be increased if needed
         self.width = width
         self.height = height
         self.font_paths = ["arial.ttf", "times.ttf", "cour.ttf", "verdana.ttf", "comic.ttf", "impact.ttf"]
@@ -44,7 +44,7 @@ class ImageGenerator:
         img = Image.new('RGB', (self.width, self.height), color='white')
         draw = ImageDraw.Draw(img)
 
-        # Grid background
+        # Background texture
         for x in range(0, self.width, 10):
             draw.line((x, 0, x, self.height), fill=(220, 220, 220), width=1)
         for y in range(0, self.height, 10):
@@ -52,18 +52,26 @@ class ImageGenerator:
 
         font_path = random.choice(self.font_paths)
         try:
-            font_size = int(self.width * 0.6)  # Dynamically scale font size
+            font_size = int(self.width * 0.75)  # Start large
             font = ImageFont.truetype(font_path, font_size)
         except IOError:
             font = ImageFont.load_default()
 
-        # Centering text
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+        # Dynamically reduce size if text overflows
+        while True:
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+
+            if text_width <= self.width * 0.9 and text_height <= self.height * 0.9:
+                break  # Stop when the text fits
+            font_size -= 2  # Reduce font size step by step
+            font = ImageFont.truetype(font_path, font_size)
+
+        # Center the text
         position = ((self.width - text_width) // 2, (self.height - text_height) // 2)
 
-        # Draw text with noise
+        # Draw text with light noise
         for dx in range(-1, 2):
             for dy in range(-1, 2):
                 if dx != 0 or dy != 0:
@@ -108,7 +116,6 @@ def verification():
             image_generator = ImageGenerator()
             images = [image_generator.generate_image(char) for char in correct_answers]
 
-            # Clear the form fields on failure
             for field in form:
                 field.data = ''
 
