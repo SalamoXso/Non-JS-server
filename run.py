@@ -44,18 +44,18 @@ class VerificationForm(FlaskForm):
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=400, height=400):  # Increased dimensions for better visibility
+    def __init__(self, width=800, height=800):  # Increased dimensions for better visibility
         self.width = width
         self.height = height
 
         # List of font paths (replace with your own font paths)
         self.font_paths = [
-            "arial.ttf",  # Default font
-            "times.ttf",  # Times New Roman
-            "cour.ttf",   # Courier New
-            "verdana.ttf",# Verdana
-            "comic.ttf",  # Comic Sans
-            "impact.ttf"  # Impact
+            "arial.ttf",  # Default font (ensure this file exists)
+            "times.ttf",  # Times New Roman (ensure this file exists)
+            "cour.ttf",   # Courier New (ensure this file exists)
+            "verdana.ttf",# Verdana (ensure this file exists)
+            "comic.ttf",  # Comic Sans (ensure this file exists)
+            "impact.ttf"  # Impact (ensure this file exists)
         ]
 
     def generate_image(self, text):
@@ -69,10 +69,10 @@ class ImageGenerator:
         for y in range(0, self.height, 10):
             draw.line((0, y, self.width, y), fill=(220, 220, 220), width=1)  # Horizontal lines
 
-        # Choose a random font and set a reasonable font size.
+        # Choose a random font and set a larger font size.
         font_path = random.choice(self.font_paths)
         try:
-            font = ImageFont.truetype(font_path, 100)  # Set font size to a reasonable value (100)
+            font = ImageFont.truetype(font_path, 200)  # Set font size to a larger value (200)
         except IOError:
             font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
 
