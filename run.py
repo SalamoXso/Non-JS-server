@@ -135,7 +135,6 @@ def verification():
     form = VerificationForm()
     images = []
     success = None
-    current_field = session.get('current_field', 0)
 
     if form.validate_on_submit():
         logger.info(f"Form submitted by IP: {request.remote_addr}")
@@ -155,17 +154,10 @@ def verification():
         logger.info(f"Correct answers: {correct_answers}")
 
         # Check if the user's input matches the correct answers
-        if user_input[current_field] == correct_answers[current_field]:
-            current_field += 1
-            session['current_field'] = current_field
-            if current_field >= len(correct_answers):
-                success = True
-                session.pop('current_field', None)
-                session.pop('correct_answers', None)
+        if user_input == correct_answers:
+            success = True
         else:
             success = False
-            current_field = 0
-            session['current_field'] = current_field
             
             # Generate new correct answers and store them in the session
             correct_answers = [generate_random_char() for _ in range(6)]
@@ -196,7 +188,7 @@ def verification():
         
         logger.info(f"Generated images on GET: {images}")
 
-    return render_template('index.html', form=form, images=images, success=success, current_field=current_field)
+    return render_template('index.html', form=form, images=images, success=success)
 
 # Run the app
 if __name__ == '__main__':
