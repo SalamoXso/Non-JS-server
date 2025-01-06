@@ -72,7 +72,7 @@ class ImageGenerator:
         # Choose a random font and set a larger font size.
         font_path = random.choice(self.font_paths)
         try:
-            font = ImageFont.truetype(font_path, 200)  # Set font size to a larger value (200)
+            font = ImageFont.truetype(font_path, -200)  # Set font size to a larger value (200)
         except IOError:
             font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
 
