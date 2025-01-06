@@ -87,20 +87,19 @@
 
             <!-- Input Fields -->
             <div class="input-container">
-                {% for i in range(6) %}
-                    {% if i == current_field %}
-                        {{ form['field' ~ i](class="input-circle", autofocus=true) }}
-                    {% else %}
-                        {{ form['field' ~ i](class="input-circle", style="display: none;") }}
-                    {% endif %}
-                {% endfor %}
+                {{ form.field0(class="input-circle", autofocus=true) }}
+                {{ form.field1(class="input-circle") }}
+                {{ form.field2(class="input-circle") }}
+                {{ form.field3(class="input-circle") }}
+                {{ form.field4(class="input-circle") }}
+                {{ form.field5(class="input-circle") }}
             </div>
 
             <!-- Generated Images -->
             <div class="image-container">
-                {% if images %}
-                    <img src="{{ images[current_field] }}" alt="Generated Image">
-                {% endif %}
+                {% for image in images %}
+                    <img src="{{ image }}" alt="Generated Image">
+                {% endfor %}
             </div>
 
             <!-- Hidden Submit Button -->
