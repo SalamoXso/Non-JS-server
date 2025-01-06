@@ -51,7 +51,7 @@ class VerificationForm(FlaskForm):
 
 # Image generator class
 class ImageGenerator:
-    def __init__(self, width=40, height=40):  # Increased dimensions for better visibility
+    def __init__(self, width=50, height=50):  # Increased dimensions for better visibility
         self.width = width
         self.height = height
 
@@ -81,8 +81,8 @@ class ImageGenerator:
         # Choose a random font and set a large font size
         font_path = random.choice(self.font_paths)
         try:
-            font_size = 100  # Set a large font size (adjust as needed)
-            font = ImageFont.truetype(font_path, font_size)
+            font_size = 150.0  # Set a large font size (adjust as needed)
+            font = ImageFont.truetype(font_path, font_size*500)
         except IOError as e:
             logger.error(f"Failed to load font: {font_path}. Error: {e}")
             font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
@@ -101,16 +101,16 @@ class ImageGenerator:
         
         draw.text(position, text, font=font, fill='black')  # Draw the main text
 
-        # Add a few random lines (light gray)
-        for _ in range(5):  # Add 5 random lines
+        # Add fewer random lines (light gray) with reduced thickness
+        for _ in range(3):  # Reduced to 3 random lines
             x1 = random.randint(0, self.width)
             y1 = random.randint(0, self.height)
             x2 = random.randint(0, self.width)
             y2 = random.randint(0, self.height)
-            draw.line((x1, y1, x2, y2), fill=(180, 180, 180), width=1)  # Light gray lines
+            draw.line((x1, y1, x2, y2), fill=(180, 180, 180), width=1)  # Light gray lines with reduced thickness
 
-        # Add a few random dots (light gray)
-        for _ in range(15):  # Add 15 random dots
+        # Add fewer random dots (light gray)
+        for _ in range(10):  # Reduced to 10 random dots
             x = random.randint(0, self.width)
             y = random.randint(0, self.height)
             draw.point((x, y), fill=(180, 180, 180))  # Light gray dots
