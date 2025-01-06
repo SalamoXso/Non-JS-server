@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -81,71 +80,40 @@
 <body>
     <div class="container">
         <h1>Verification Process</h1>
-        <form id="verification-form">
+        <form method="POST" action="/">
+            <!-- CSRF Token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Input Fields -->
             <div class="input-container">
-                <input type="text" class="input-circle" id="field0" maxlength="1" required autofocus>
-                <input type="text" class="input-circle" id="field1" maxlength="1" required>
-                <input type="text" class="input-circle" id="field2" maxlength="1" required>
-                <input type="text" class="input-circle" id="field3" maxlength="1" required>
-                <input type="text" class="input-circle" id="field4" maxlength="1" required>
-                <input type="text" class="input-circle" id="field5" maxlength="1" required>
+                {{ form.field0(class="input-circle", autofocus=true) }}
+                {{ form.field1(class="input-circle") }}
+                {{ form.field2(class="input-circle") }}
+                {{ form.field3(class="input-circle") }}
+                {{ form.field4(class="input-circle") }}
+                {{ form.field5(class="input-circle") }}
             </div>
-            <div class="image-container" id="image-container">
-                <!-- Images will be dynamically added here -->
+
+            <!-- Generated Images -->
+            <div class="image-container">
+                {% for image in images %}
+                    <img src="{{ image }}" alt="Generated Image">
+                {% endfor %}
             </div>
+
+            <!-- Hidden Submit Button -->
             <input type="submit" class="hidden-submit">
+
+            <!-- Instruction -->
             <div class="instruction">Press <strong>Enter</strong> after filling all fields.</div>
-            <div id="message" class="message"></div>
+
+            <!-- Success/Error Message -->
+            {% if success is not none %}
+                <p class="message {% if success %}success{% else %}error{% endif %}">
+                    {{ "Verification Successful!" if success else "Verification Failed. Please try again." }}
+                </p>
+            {% endif %}
         </form>
-        
-        <script>
-            const form = document.getElementById('verification-form');
-            const imageContainer = document.getElementById('image-container');
-            const messageDiv = document.getElementById('message');
-        
-            // Fetch images from the back-end
-            async function fetchImages() {
-                const response = await fetch('https://your-flask-backend-url.com/get-images');
-                const data = await response.json();
-                imageContainer.innerHTML = data.images.map(image => `
-                    <img src="${image}" alt="Generated Image">
-                `).join('');
-            }
-        
-            // Handle form submission
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const userInput = [
-                    document.getElementById('field0').value,
-                    document.getElementById('field1').value,
-                    document.getElementById('field2').value,
-                    document.getElementById('field3').value,
-                    document.getElementById('field4').value,
-                    document.getElementById('field5').value
-                ];
-        
-                const response = await fetch('https://your-flask-backend-url.com/verify', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ userInput }),
-                });
-                const result = await response.json();
-        
-                if (result.success) {
-                    messageDiv.textContent = "Verification Successful!";
-                    messageDiv.className = "message success";
-                } else {
-                    messageDiv.textContent = "Verification Failed. Please try again.";
-                    messageDiv.className = "message error";
-                    fetchImages(); // Fetch new images on failure
-                }
-            });
-        
-            // Fetch images on page load
-            fetchImages();
-        </script>
     </div>
 
     <!-- Minimal JavaScript to auto-focus the next field -->
