@@ -13,8 +13,13 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from PIL import Image, ImageDraw, ImageFont
 
-app = Flask(__name__, static_folder='static', template_folder=os.path.join(os.getcwd(), "templates"))
-app.secret_key = secrets.token_urlsafe(32)  # Strong secret key
+# Initialize Flask app
+app = Flask(__name__, static_folder='static', template_folder='templates')
+
+# Set a strong secret key (use environment variable in production)
+app.secret_key = os.getenv('SECRET_KEY', secrets.token_urlsafe(32))
+
+# Configure session settings for security
 app.config.update(
     SESSION_COOKIE_SECURE=True,  # Only send cookies over HTTPS
     SESSION_COOKIE_HTTPONLY=True,  # Prevent JavaScript access to cookies
@@ -35,6 +40,7 @@ limiter = Limiter(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Define the verification form
 class VerificationForm(FlaskForm):
     field0 = StringField('Field 0', [validators.Length(min=1, max=1)])
     field1 = StringField('Field 1', [validators.Length(min=1, max=1)])
@@ -43,19 +49,22 @@ class VerificationForm(FlaskForm):
     field4 = StringField('Field 4', [validators.Length(min=1, max=1)])
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
+# Image generator class
 class ImageGenerator:
-    def __init__(self, width=200, height=100):  # Smaller dimensions for better character visibility
+    def __init__(self, width=200, height=100):  # Smaller dimensions for better visibility
         self.width = width
         self.height = height
 
-        # List of font paths (replace with your own font paths)
+        # List of font paths (relative to the project root)
         self.font_paths = [
-            "arial.ttf",  # Default font (ensure this file exists)
-            "times.ttf",  # Times New Roman (ensure this file exists)
-            "cour.ttf",   # Courier New (ensure this file exists)
-            "verdana.ttf",# Verdana (ensure this file exists)
-            "comic.ttf",  # Comic Sans (ensure this file exists)
-            "impact.ttf"  # Impact (ensure this file exists)
+            "fonts/Verdana.ttf",          # Verdana Regular
+            "fonts/Verdana_Bold.ttf",     # Verdana Bold
+            "fonts/Verdana_Italic.ttf",   # Verdana Italic
+            "fonts/Courier_New.ttf",      # Courier New Regular
+            "fonts/Arial.ttf",            # Arial Regular
+            "fonts/Arial_Bold.ttf",       # Arial Bold
+            "fonts/Arial_Italic.ttf",     # Arial Italic
+            "fonts/Arial_Bold_Italic.ttf" # Arial Bold Italic
         ]
 
     def generate_image(self, text):
@@ -74,7 +83,8 @@ class ImageGenerator:
         try:
             font_size = int(self.height * 0.8)  # Set font size to 80% of the image height
             font = ImageFont.truetype(font_path, font_size)
-        except IOError:
+        except IOError as e:
+            logger.error(f"Failed to load font: {font_path}. Error: {e}")
             font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
 
         # Calculate text position to center it
@@ -112,14 +122,13 @@ class ImageGenerator:
 
         # Encode the image as a base64 string
         image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-        
         return f"data:image/png;base64,{image_base64}"
 
-
+# Helper function to generate random characters
 def generate_random_char():
     return random.choice(string.ascii_letters + string.digits)
 
-
+# Main route
 @app.route('/', methods=['GET', 'POST'])
 @limiter.limit("20 per minute")  # Apply rate limiting to this route
 def verification():
@@ -130,6 +139,7 @@ def verification():
     if form.validate_on_submit():
         logger.info(f"Form submitted by IP: {request.remote_addr}")
         
+        # Get user input from the form
         user_input = [form.field0.data,
                       form.field1.data,
                       form.field2.data,
@@ -137,6 +147,7 @@ def verification():
                       form.field4.data,
                       form.field5.data]
         
+        # Get the correct answers from the session
         correct_answers = session.get('correct_answers', [])
         
         logger.info(f"User input: {user_input}")
@@ -148,9 +159,11 @@ def verification():
         else:
             success = False
             
+            # Generate new correct answers and store them in the session
             correct_answers = [generate_random_char() for _ in range(6)]
             session['correct_answers'] = correct_answers
             
+            # Generate new CAPTCHA images
             image_generator = ImageGenerator()
             images = [image_generator.generate_image(char) for char in correct_answers]
             
@@ -165,18 +178,18 @@ def verification():
             form.field5.data = ''
 
     elif request.method == 'GET':
+        # Generate new correct answers and store them in the session
         correct_answers = [generate_random_char() for _ in range(6)]
-        
         session['correct_answers'] = correct_answers
         
+        # Generate new CAPTCHA images
         image_generator = ImageGenerator()
-        
         images = [image_generator.generate_image(char) for char in correct_answers]
         
         logger.info(f"Generated images on GET: {images}")
 
     return render_template('index.html', form=form, images=images, success=success)
 
-
+# Run the app
 if __name__ == '__main__':
     app.run(debug=True)
