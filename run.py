@@ -51,7 +51,7 @@ class VerificationForm(FlaskForm):
 
 # Image generator class
 class ImageGenerator:
-    def __init__(self, width=400, height=200):  # Increased dimensions for better visibility
+    def __init__(self, width=40, height=40):  # Increased dimensions for better visibility
         self.width = width
         self.height = height
 
