@@ -35,7 +35,7 @@ class VerificationForm(FlaskForm):
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=150, height=150):  # Keep 150x150, can be increased if needed
+    def __init__(self, width=200, height=200):  # Increased image size to 200x200
         self.width = width
         self.height = height
         self.font_paths = ["arial.ttf", "times.ttf", "cour.ttf", "verdana.ttf", "comic.ttf", "impact.ttf"]
@@ -52,23 +52,30 @@ class ImageGenerator:
 
         font_path = random.choice(self.font_paths)
         try:
-            font_size = int(self.width * 0.75)  # Start large
+            font_size = 200  # Start with a very large font size
             font = ImageFont.truetype(font_path, font_size)
         except IOError:
             font = ImageFont.load_default()
 
-        # Dynamically reduce size if text overflows
+        # Reduce size if text is too big
+        min_font_size = 40  # Ensure a minimum readable size
         while True:
             bbox = draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
 
-            if text_width <= self.width * 0.9 and text_height <= self.height * 0.9:
-                break  # Stop when the text fits
-            font_size -= 2  # Reduce font size step by step
+            if text_width <= self.width * 0.8 and text_height <= self.height * 0.8:
+                break  # Stop shrinking when text fits inside the image
+            font_size -= 5  # Reduce font size step by step
+            if font_size < min_font_size:
+                font_size = min_font_size
+                break  # Don't shrink below this size
             font = ImageFont.truetype(font_path, font_size)
 
         # Center the text
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
         position = ((self.width - text_width) // 2, (self.height - text_height) // 2)
 
         # Draw text with light noise
