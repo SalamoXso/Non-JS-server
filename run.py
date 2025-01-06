@@ -44,7 +44,7 @@ class VerificationForm(FlaskForm):
     field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=100, height=100):
+    def __init__(self, width=400, height=400):  # Increased dimensions for better visibility
         self.width = width
         self.height = height
 
@@ -69,10 +69,10 @@ class ImageGenerator:
         for y in range(0, self.height, 10):
             draw.line((0, y, self.width, y), fill=(220, 220, 220), width=1)  # Horizontal lines
 
-        # Choose a random font and increase the size to be ten times larger than before.
+        # Choose a random font and set a reasonable font size.
         font_path = random.choice(self.font_paths)
         try:
-            font = ImageFont.truetype(font_path, 5000)  # Font size increased to 5000.
+            font = ImageFont.truetype(font_path, 100)  # Set font size to a reasonable value (100)
         except IOError:
             font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
 
@@ -87,6 +87,7 @@ class ImageGenerator:
             for dy in range(-1, 2):  # Add slight vertical noise
                 if dx != 0 or dy != 0:  # Skip the original position
                     draw.text((position[0] + dx, position[1] + dy), text, font=font, fill=(200, 200, 200))  # Light gray noise
+        
         draw.text(position, text, font=font, fill='black')  # Draw the main text
 
         # Add a few random lines (light gray)
@@ -126,6 +127,7 @@ def verification():
 
     if form.validate_on_submit():
         logger.info(f"Form submitted by IP: {request.remote_addr}")
+        
         user_input = [form.field0.data,
                       form.field1.data,
                       form.field2.data,
