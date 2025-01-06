@@ -1,90 +1,160 @@
 import os
 import secrets
-from flask import Flask, render_template, request, jsonify, session, current_app, url_for
+import random
+import string
+import io
+import base64
+import logging
+from flask import Flask, render_template, request, session
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect
+from wtforms import StringField, validators
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from PIL import Image, ImageDraw, ImageFont
 
-app = Flask(__name__, static_folder='static', template_folder=os.path.join(os.getcwd(), "app", "templates"))
+app = Flask(__name__, static_folder='static', template_folder=os.path.join(os.getcwd(), "templates"))
+app.secret_key = secrets.token_urlsafe(32)  # Strong secret key
+app.config.update(
+    SESSION_COOKIE_SECURE=True,  # Only send cookies over HTTPS
+    SESSION_COOKIE_HTTPONLY=True,  # Prevent JavaScript access to cookies
+    SESSION_COOKIE_SAMESITE='Lax'  # Prevent CSRF attacks
+)
 
-app.secret_key = secrets.token_urlsafe(16)  # Secret key for session management
+# Enable CSRF protection
+csrf = CSRFProtect(app)
+
+# Enable rate limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,  # Limit by IP address
+    default_limits=["5 per minute"]  # Allow 5 attempts per minute
+)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class VerificationForm(FlaskForm):
+    field0 = StringField('Field 0', [validators.Length(min=1, max=1)])
+    field1 = StringField('Field 1', [validators.Length(min=1, max=1)])
+    field2 = StringField('Field 2', [validators.Length(min=1, max=1)])
+    field3 = StringField('Field 3', [validators.Length(min=1, max=1)])
+    field4 = StringField('Field 4', [validators.Length(min=1, max=1)])
+    field5 = StringField('Field 5', [validators.Length(min=1, max=1)])
 
 class ImageGenerator:
-    def __init__(self, width=200, height=100):
+    def __init__(self, width=100, height=100):
         self.width = width
         self.height = height
-        
-        # Try using default font if arial.ttf is unavailable
-        try:
-            self.font = ImageFont.truetype("arial.ttf", 30)
-        except IOError:
-            print("Arial font not found, using default font.")
-            self.font = ImageFont.load_default()
+
+        # List of font paths (replace with your own font paths)
+        self.font_paths = [
+            "arial.ttf",  # Default font
+            "times.ttf",  # Times New Roman
+            "cour.ttf",   # Courier New
+            "verdana.ttf",# Verdana
+            "comic.ttf",  # Comic Sans
+            "impact.ttf"  # Impact
+        ]
 
     def generate_image(self, text):
-        # Create a new image with a white background
+        # Create a blank image with a white background
         img = Image.new('RGB', (self.width, self.height), color='white')
         draw = ImageDraw.Draw(img)
 
-        # Add text to the image
-        draw.text((10, 10), text=text, font=self.font, fill='black')
+        # Add a light background texture (e.g., a grid)
+        for x in range(0, self.width, 10):
+            draw.line((x, 0, x, self.height), fill=(220, 220, 220), width=1)  # Vertical lines
+        for y in range(0, self.height, 10):
+            draw.line((0, y, self.width, y), fill=(220, 220, 220), width=1)  # Horizontal lines
 
-        # Generate a random filename
-        random_str = secrets.token_urlsafe(16)  # Generate a secure token-based filename
-        filename = f"{random_str}.png"
-        
-        # Define the save path using Flask's current_app
-        save_dir = os.path.join(current_app.root_path, 'static', 'images', 'generated_images')
-        print(f"Saving image to: {save_dir}")  # Debugging statement
-
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)  # Create the directory if it doesn't exist
-
-        image_path = os.path.join(save_dir, filename)
-        print(f"Generated image path: {image_path}")  # Debugging statement
-
+        # Choose a random font
+        font_path = random.choice(self.font_paths)
         try:
-            img.save(image_path)  # Save the image
-            print(f"Image saved at: {image_path}")  # Debugging statement
-        except Exception as e:
-            print(f"Error saving image: {e}")  # Error handling
+            font = ImageFont.truetype(font_path, 30)
+        except IOError:
+            font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
 
-        return filename
+        # Calculate text position
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        position = ((self.width - text_width) / 2, (self.height - text_height) / 2)
+
+        # Draw the text with slight noise
+        for dx in range(-1, 2):  # Add slight horizontal noise
+            for dy in range(-1, 2):  # Add slight vertical noise
+                if dx != 0 or dy != 0:  # Skip the original position
+                    draw.text((position[0] + dx, position[1] + dy), text, font=font, fill=(200, 200, 200))  # Light gray noise
+        draw.text(position, text, font=font, fill='black')  # Draw the main text
+
+        # Add a few random lines (light gray)
+        for _ in range(5):  # Add 5 random lines
+            x1 = random.randint(0, self.width)
+            y1 = random.randint(0, self.height)
+            x2 = random.randint(0, self.width)
+            y2 = random.randint(0, self.height)
+            draw.line((x1, y1, x2, y2), fill=(180, 180, 180), width=1)  # Light gray lines
+
+        # Add a few random dots (light gray)
+        for _ in range(15):  # Add 15 random dots
+            x = random.randint(0, self.width)
+            y = random.randint(0, self.height)
+            draw.point((x, y), fill=(180, 180, 180))  # Light gray dots
+
+        # Save the image to an in-memory buffer
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        # Encode the image as a base64 string
+        image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        return f"data:image/png;base64,{image_base64}"
 
 
-def verify(user_input):
-    # Implement your verification logic here
-    if all(field.strip() != "" for field in user_input):  # Check that no fields are empty
-        return True
-    else:
-        return False
+def generate_random_char():
+    return random.choice(string.ascii_letters + string.digits)
 
 
 @app.route('/', methods=['GET', 'POST'])
+@limiter.limit("20 per minute")  # Apply rate limiting to this route
 def verification():
-    images = []  # Initialize an empty list to hold image filenames
+    form = VerificationForm()
+    images = []
+    success = None
 
-    if request.method == 'POST':
-        # Handle form submission
-        user_input = [request.form.get(f'field{i}') for i in range(6)]  # Get the values for fields
+    if form.validate_on_submit():
+        logger.info(f"Form submitted by IP: {request.remote_addr}")
+        user_input = [form.field0.data, form.field1.data, form.field2.data,
+                      form.field3.data, form.field4.data, form.field5.data]
+        correct_answers = session.get('correct_answers', [])
 
-        # Initialize the image generator
-        generator = ImageGenerator()
+        # Check if the user's input matches the correct answers
+        if user_input == correct_answers:
+            success = True
+        else:
+            success = False
+            correct_answers = [generate_random_char() for _ in range(6)]
+            session['correct_answers'] = correct_answers
+            image_generator = ImageGenerator()
+            images = [image_generator.generate_image(char) for char in correct_answers]
 
-        # Generate images based on inputs
-        for i in range(6):
-            if user_input[i]:  # Check if the input field is not empty
-                print(f"Generating image for field{i}: {user_input[i]}")  # Debugging statement
-                image_filename = generator.generate_image(user_input[i])  # Generate image
-                if image_filename:
-                    images.append(image_filename)  # Add the filename to the list
-                else:
-                    print(f"Image generation failed for input: {user_input[i]}")  # Debugging statement
+            # Clear the form fields on failure
+            form.field0.data = ''
+            form.field1.data = ''
+            form.field2.data = ''
+            form.field3.data = ''
+            form.field4.data = ''
+            form.field5.data = ''
 
-        # Implement your verification logic
-        success = verify(user_input)  # Call the verify function
+    elif request.method == 'GET':
+        correct_answers = [generate_random_char() for _ in range(6)]
+        session['correct_answers'] = correct_answers
+        image_generator = ImageGenerator()
+        images = [image_generator.generate_image(char) for char in correct_answers]
 
-        return render_template('index.html', images=images, success=success)
-
-    return render_template('index.html', images=images)
+    return render_template('index.html', form=form, images=images, success=success)
 
 
 if __name__ == '__main__':
