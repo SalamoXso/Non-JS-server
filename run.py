@@ -69,10 +69,10 @@ class ImageGenerator:
         for y in range(0, self.height, 10):
             draw.line((0, y, self.width, y), fill=(220, 220, 220), width=1)  # Horizontal lines
 
-        # Choose a random font
+        # Choose a random font and increase the size to be ten times larger than before.
         font_path = random.choice(self.font_paths)
         try:
-            font = ImageFont.truetype(font_path, 500)
+            font = ImageFont.truetype(font_path, 5000)  # Font size increased to 5000.
         except IOError:
             font = ImageFont.load_default()  # Fallback to default font if the chosen font fails
 
@@ -126,9 +126,15 @@ def verification():
 
     if form.validate_on_submit():
         logger.info(f"Form submitted by IP: {request.remote_addr}")
-        user_input = [form.field0.data, form.field1.data, form.field2.data,
-                      form.field3.data, form.field4.data, form.field5.data]
+        user_input = [form.field0.data,
+                      form.field1.data,
+                      form.field2.data,
+                      form.field3.data,
+                      form.field4.data,
+                      form.field5.data]
+        
         correct_answers = session.get('correct_answers', [])
+        
         logger.info(f"User input: {user_input}")
         logger.info(f"Correct answers: {correct_answers}")
 
@@ -137,10 +143,13 @@ def verification():
             success = True
         else:
             success = False
+            
             correct_answers = [generate_random_char() for _ in range(6)]
             session['correct_answers'] = correct_answers
+            
             image_generator = ImageGenerator()
             images = [image_generator.generate_image(char) for char in correct_answers]
+            
             logger.info(f"Generated images: {images}")
 
             # Clear the form fields on failure
@@ -153,9 +162,13 @@ def verification():
 
     elif request.method == 'GET':
         correct_answers = [generate_random_char() for _ in range(6)]
+        
         session['correct_answers'] = correct_answers
+        
         image_generator = ImageGenerator()
+        
         images = [image_generator.generate_image(char) for char in correct_answers]
+        
         logger.info(f"Generated images on GET: {images}")
 
     return render_template('index.html', form=form, images=images, success=success)
