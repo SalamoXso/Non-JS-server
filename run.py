@@ -46,8 +46,7 @@ class VerificationForm(FlaskForm):
     field1 = StringField('Field 1', [validators.Optional(), validators.Length(min=1, max=1)])
     field2 = StringField('Field 2', [validators.Optional(), validators.Length(min=1, max=1)])
     field3 = StringField('Field 3', [validators.Optional(), validators.Length(min=1, max=1)])
-    field4 = StringField('Field 4', [validators.Optional(), validators.Length(min=1, max=1)])
-    field5 = StringField('Field 5', [validators.Optional(), validators.Length(min=1, max=1)])
+
 
 # Image generator class
 class ImageGenerator:
@@ -139,7 +138,7 @@ def verification():
 
     if request.method == 'GET':
         # Generate new unique correct answers and store them in the session
-        correct_answers = [generate_random_char() for _ in range(6)]
+        correct_answers = [generate_random_char() for _ in range(4)]
         session['correct_answers'] = correct_answers
         
         # Generate new CAPTCHA images
@@ -167,7 +166,7 @@ def verification():
             logger.info(f"Field {current_field} is correct.")
             current_field += 1
             session['current_field'] = current_field
-            if current_field >= len(correct_answers):
+            if current_field >= 4:
                 success = True
                 session.pop('current_field', None)
                 session.pop('correct_answers', None)
@@ -179,7 +178,7 @@ def verification():
             session['current_field'] = current_field
             
             # Generate new unique correct answers and store them in the session
-            correct_answers = [generate_random_char() for _ in range(6)]
+            correct_answers = [generate_random_char() for _ in range(4)]
             session['correct_answers'] = correct_answers
             
             # Generate new CAPTCHA images
@@ -194,8 +193,7 @@ def verification():
             form.field1.data = ''
             form.field2.data = ''
             form.field3.data = ''
-            form.field4.data = ''
-            form.field5.data = ''
+            
     else:
         # Log form validation errors
         logger.info(f"Form validation failed. Errors: {form.errors}")
