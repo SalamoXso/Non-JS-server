@@ -45,6 +45,11 @@
         .input-circle:focus {
             border-color: #0056b3;
         }
+        .input-circle:disabled {
+            background-color: #e9ecef;
+            border-color: #28a745;
+            color: #28a745;
+        }
         .image-container {
             display: flex;
             justify-content: center;
@@ -57,9 +62,6 @@
             margin: 7.5px;
             border-radius: 7.5px;
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-        }
-        .hidden-submit {
-            display: none;
         }
         .instruction {
             margin-top: 1.5rem;
@@ -83,13 +85,33 @@
         <h1>Verification Process</h1>
         {% if success is none or not success %}
             <div class="input-container">
-                {% for i in range(4) %}
-                    {% if i == current_field %}
-                        <form method="POST" action="/">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            {{ form['field' ~ i](class="input-circle", autofocus=true, oninput="this.form.submit()") }}
-                        </form>
-                    {% endif %}
+                {% for i in range(6) %}
+                    <form method="POST" action="/">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% if i < current_field %}
+                            <!-- Locked Circle (Correct Input) -->
+                            <input
+                                type="text"
+                                class="input-circle"
+                                value="{{ session['user_inputs'][i] }}"
+                                disabled
+                            >
+                        {% elif i == current_field %}
+                            <!-- Active Circle (Current Field) -->
+                            {{ form['field' ~ i](
+                                class="input-circle",
+                                autofocus=true,
+                                oninput="this.form.submit()"
+                            ) }}
+                        {% else %}
+                            <!-- Inactive Circle (Future Field) -->
+                            <input
+                                type="text"
+                                class="input-circle"
+                                disabled
+                            >
+                        {% endif %}
+                    </form>
                 {% endfor %}
             </div>
 
