@@ -154,15 +154,15 @@ def verification():
         # Get the correct answers from the session
         correct_answers = session.get('correct_answers', [])
         
-        # Get the value of the current field from the form
-        current_field_value = request.form.get(f'field{current_field}', '').strip().lower()
-        correct_answer = correct_answers[current_field].strip().lower()
+        # Get the value of the current field from the form (case-sensitive)
+        current_field_value = request.form.get(f'field{current_field}', '').strip()  # Case-sensitive
+        correct_answer = correct_answers[current_field].strip()  # Case-sensitive
         
         logger.info(f"User input for field {current_field}: {current_field_value}")
         logger.info(f"Correct answer for field {current_field}: {correct_answer}")
 
-        # Check if the user's input matches the correct answer for the current field
-        if current_field_value == correct_answer:
+        # Check if the user's input matches the correct answer for the current field (case-sensitive)
+        if current_field_value == correct_answer:  # Case-sensitive comparison
             logger.info(f"Field {current_field} is correct.")
             current_field += 1
             session['current_field'] = current_field
@@ -205,6 +205,7 @@ def verification():
         images = [image_generator.generate_image(char) for char in correct_answers]
 
     return render_template('index.html', form=form, images=images, success=success, current_field=current_field)
+
 # Run the app
 if __name__ == '__main__':
     app.run(debug=True)
