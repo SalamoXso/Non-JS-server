@@ -40,13 +40,14 @@ limiter = Limiter(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Define the verification form
+# Define the verification form with six fields
 class VerificationForm(FlaskForm):
     field0 = StringField('Field 0', [validators.Optional(), validators.Length(min=1, max=1)])
     field1 = StringField('Field 1', [validators.Optional(), validators.Length(min=1, max=1)])
     field2 = StringField('Field 2', [validators.Optional(), validators.Length(min=1, max=1)])
     field3 = StringField('Field 3', [validators.Optional(), validators.Length(min=1, max=1)])
-
+    field4 = StringField('Field 4', [validators.Optional(), validators.Length(min=1, max=1)])
+    field5 = StringField('Field 5', [validators.Optional(), validators.Length(min=1, max=1)])
 
 # Image generator class
 class ImageGenerator:
@@ -129,17 +130,19 @@ def generate_random_char():
 
 # Main route
 @app.route('/', methods=['GET', 'POST'])
-@limiter.limit("20 per minute")  # Apply rate limiting to this route
+@limiter.limit("100 per minute")  # Apply rate limiting to this route
 def verification():
     form = VerificationForm()
     images = []
     success = None
     current_field = session.get('current_field', 0)
+    user_inputs = session.get('user_inputs', [''] * 6)  # Store user inputs for all fields
 
     if request.method == 'GET':
         # Generate new unique correct answers and store them in the session
-        correct_answers = [generate_random_char() for _ in range(4)]
+        correct_answers = [generate_random_char() for _ in range(6)]
         session['correct_answers'] = correct_answers
+        session['user_inputs'] = [''] * 6  # Reset user inputs
         
         # Generate new CAPTCHA images
         image_generator = ImageGenerator()
@@ -164,12 +167,15 @@ def verification():
         # Check if the user's input matches the correct answer for the current field (case-sensitive)
         if current_field_value == correct_answer:  # Case-sensitive comparison
             logger.info(f"Field {current_field} is correct.")
+            user_inputs[current_field] = current_field_value  # Store the correct input
+            session['user_inputs'] = user_inputs
             current_field += 1
             session['current_field'] = current_field
-            if current_field >= 4:
+            if current_field >= 6:
                 success = True
                 session.pop('current_field', None)
                 session.pop('correct_answers', None)
+                session.pop('user_inputs', None)
                 logger.info("All fields are correct. Verification successful.")
         else:
             logger.info(f"Field {current_field} is incorrect.")
@@ -178,8 +184,9 @@ def verification():
             session['current_field'] = current_field
             
             # Generate new unique correct answers and store them in the session
-            correct_answers = [generate_random_char() for _ in range(4)]
+            correct_answers = [generate_random_char() for _ in range(6)]
             session['correct_answers'] = correct_answers
+            session['user_inputs'] = [''] * 6  # Reset user inputs
             
             # Generate new CAPTCHA images
             image_generator = ImageGenerator()
@@ -189,10 +196,8 @@ def verification():
             logger.info(f"New correct answers: {correct_answers}")
 
             # Clear the form fields on failure
-            form.field0.data = ''
-            form.field1.data = ''
-            form.field2.data = ''
-            form.field3.data = ''
+            for i in range(6):
+                form[f'field{i}'].data = ''
             
     else:
         # Log form validation errors
@@ -205,7 +210,6 @@ def verification():
         images = [image_generator.generate_image(char) for char in correct_answers]
 
     return render_template('index.html', form=form, images=images, success=success, current_field=current_field)
-
 # Run the app
 if __name__ == '__main__':
     app.run(debug=True)
